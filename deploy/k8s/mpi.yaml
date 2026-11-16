@@ -4,6 +4,24 @@ metadata:
   name: mpi-tfgii
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mpi-data-pv
+  labels:
+    app: mpi
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  volumeMode: Filesystem
+  hostPath:
+    path: /var/lib/mpi-data
+    type: Directory
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mpi-data
@@ -11,6 +29,11 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: ""
+  volumeMode: Filesystem
+  selector:
+    matchLabels:
+      app: mpi
   resources:
     requests:
       storage: 1Gi

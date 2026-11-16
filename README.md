@@ -33,8 +33,17 @@ GitHub Actions запускает тесты и публикует контей�
 с тегами `latest` и `sha-*` при push в `main`. PDF, локальное окружение и
 загруженный набор данных в репозиторий и контейнер не попадают.
 
-После первой сборки сделайте пакет GHCR публичным в GitHub Packages, затем на
-сервере примените манифест:
+Образ GHCR публикуется публично. Для одновузлового кластера без StorageClass
+манифест создаёт отдельный static PV на `/var/lib/mpi-data`. Перед применением
+подготовьте каталог на Kubernetes-узле (UID приложения — `10001`):
+
+```bash
+mkdir -p /var/lib/mpi-data
+chown 10001:10001 /var/lib/mpi-data
+chmod 0750 /var/lib/mpi-data
+```
+
+Затем примените манифест:
 
 ```bash
 kubectl apply -f deploy/k8s/mpi.yaml
@@ -51,6 +60,7 @@ kubectl -n mpi-tfgii get service mpi
 kubectl -n mpi-tfgii rollout restart deployment/mpi
 ```
 
-PVC требует доступного в кластере StorageClass по умолчанию. Приложение не имеет
+Этот `hostPath` подходит только для текущего одновузлового кластера; при добавлении
+узлов настройте подходящий local PV или StorageClass. Приложение не имеет
 авторизации: ограничьте NodePort доверенной сетью и не публикуйте его в интернет
 без прокси с HTTPS и защитой доступа.
