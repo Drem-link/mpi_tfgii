@@ -17,6 +17,9 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   volumeMode: Filesystem
+  claimRef:
+    namespace: mpi-tfgii
+    name: mpi-data
   hostPath:
     path: /var/lib/mpi-data
     type: Directory
@@ -29,11 +32,6 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: ""
-  volumeMode: Filesystem
-  selector:
-    matchLabels:
-      app: mpi
   resources:
     requests:
       storage: 1Gi
