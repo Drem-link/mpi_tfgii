@@ -72,6 +72,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/mpi
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: 100m
@@ -107,6 +109,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: mpi-data
+        - name: tmp
+          emptyDir:
+            sizeLimit: 600Mi
 ---
 apiVersion: v1
 kind: Service
