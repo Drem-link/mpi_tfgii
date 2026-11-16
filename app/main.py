@@ -6,9 +6,10 @@ import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app import dbfio
 from app.shapefile import MAX_ARCHIVE_BYTES, ShapefileDataset, load_shapefile_zip
@@ -73,42 +74,47 @@ def map_overview():
 
 
 @app.post("/api/dataset")
-async def upload_dataset(file: UploadFile = File(...)):
+async def upload_dataset(request: Request):
     global _dataset
-    filename = Path((file.filename or "").replace("\\", "/")).name
-    if not filename.lower().endswith(".zip"):
-        raise HTTPException(400, "Загрузите ZIP-архив с файлами .shp, .dbf и желательно .prj.")
-    temporary_path = None
-    try:
-        DATASET_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(
-            prefix=".deposits-", suffix=".zip", dir=DATASET_PATH.parent, delete=False
-        ) as temporary:
-            temporary_path = Path(temporary.name)
-            total_size = 0
-            while chunk := await file.read(1024 * 1024):
-                total_size += len(chunk)
-                if total_size > MAX_ARCHIVE_BYTES:
-                    raise HTTPException(413, "ZIP-архив больше 512 МБ.")
-                temporary.write(chunk)
-            temporary.flush()
-            os.fsync(temporary.fileno())
+    async with request.form(
+        max_files=1, max_fields=0, max_part_size=MAX_ARCHIVE_BYTES
+    ) as form:
+        file = form.get("file")
+        if not isinstance(file, StarletteUploadFile):
+            raise HTTPException(400, "Выберите ZIP-архив.")
+        filename = Path((file.filename or "").replace("\\", "/")).name
+        if not filename.lower().endswith(".zip"):
+            raise HTTPException(400, "Загрузите ZIP-архив с файлами .shp, .dbf и желательно .prj.")
+        temporary_path = None
+        try:
+            DATASET_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                prefix=".deposits-", suffix=".zip", dir=DATASET_PATH.parent, delete=False
+            ) as temporary:
+                temporary_path = Path(temporary.name)
+                total_size = 0
+                while chunk := await file.read(1024 * 1024):
+                    total_size += len(chunk)
+                    if total_size > MAX_ARCHIVE_BYTES:
+                        raise HTTPException(413, "ZIP-архив больше 512 МБ.")
+                    temporary.write(chunk)
+                temporary.flush()
+                os.fsync(temporary.fileno())
 
-        with temporary_path.open("rb") as source:
-            try:
-                loaded = await asyncio.to_thread(load_shapefile_zip, filename, source)
-            except ValueError as error:
-                raise HTTPException(400, str(error)) from error
-        os.replace(temporary_path, DATASET_PATH)
-        _dataset = loaded
-        return {
-            "dataset": loaded.summary(),
-            "items": [record.as_dict(include_geometry=False) for record in loaded.records[:80]],
-        }
-    finally:
-        await file.close()
-        if temporary_path and temporary_path.exists():
-            temporary_path.unlink()
+            with temporary_path.open("rb") as source:
+                try:
+                    loaded = await asyncio.to_thread(load_shapefile_zip, filename, source)
+                except ValueError as error:
+                    raise HTTPException(400, str(error)) from error
+            os.replace(temporary_path, DATASET_PATH)
+            _dataset = loaded
+            return {
+                "dataset": loaded.summary(),
+                "items": [record.as_dict(include_geometry=False) for record in loaded.records[:80]],
+            }
+        finally:
+            if temporary_path and temporary_path.exists():
+                temporary_path.unlink()
 
 
 @app.get("/api/occurrences")
