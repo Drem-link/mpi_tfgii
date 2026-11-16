@@ -1,0 +1,5 @@
+/data/
+.venv/
+Combined.pdf
+__pycache__/
+*.py[cod]
