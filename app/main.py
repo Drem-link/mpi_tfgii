@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app import dbfio
+from app import xlsxio
 from app.shapefile import MAX_ARCHIVE_BYTES, ShapefileDataset, load_shapefile_zip
 from app.textutil import fold
 
@@ -163,6 +164,24 @@ def export_dbf(record_id: int | None = None):
     return Response(
         content=_export_rows(records),
         media_type="application/x-dbase",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/xlsx")
+def export_xlsx(record_id: int | None = None):
+    dataset = _require_dataset()
+    if record_id is None:
+        records = dataset.records
+        filename = "occurrences.xlsx"
+    else:
+        if record_id < 0 or record_id >= len(dataset.records):
+            raise HTTPException(404, "Месторождение не найдено.")
+        records = [dataset.records[record_id]]
+        filename = f"occurrence-{record_id + 1}.xlsx"
+    return Response(
+        content=xlsxio.dumps(dataset.fields, (record.attributes for record in records)),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

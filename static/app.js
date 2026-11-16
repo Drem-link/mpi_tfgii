@@ -34,7 +34,9 @@ const elements = {
   fieldList: document.querySelector("#field-list"),
   sourceFieldCount: document.querySelector("#source-field-count"),
   exportOne: document.querySelector("#export-one"),
+  exportOneXlsx: document.querySelector("#export-one-xlsx"),
   exportAll: document.querySelector("#export-all"),
+  exportAllXlsx: document.querySelector("#export-all-xlsx"),
   toast: document.querySelector("#toast"),
   uploadOverlay: document.querySelector("#upload-overlay"),
   uploadButton: document.querySelector("#upload-button"),
@@ -311,7 +313,9 @@ async function selectRecord(recordId, { focusMap = true } = {}) {
     elements.detailName.textContent = record.name || "Без названия";
     elements.sourceFieldCount.textContent = Object.keys(record.attributes || {}).length;
     elements.exportOne.href = `/api/export/dbf?record_id=${record.id}`;
+    elements.exportOneXlsx.href = `/api/export/xlsx?record_id=${record.id}`;
     elements.exportOne.setAttribute("aria-disabled", "false");
+    elements.exportOneXlsx.setAttribute("aria-disabled", "false");
     renderSummary(record);
     renderFields(record);
     drawGeometry(record, focusMap);
@@ -361,8 +365,11 @@ function updateDataset(dataset) {
   elements.datasetName.textContent = dataset.filename;
   elements.count.textContent = new Intl.NumberFormat("ru-RU").format(dataset.count);
   elements.exportAll.href = "/api/export/dbf";
+  elements.exportAllXlsx.href = "/api/export/xlsx";
   elements.exportAll.classList.remove("disabled");
+  elements.exportAllXlsx.classList.remove("disabled");
   elements.exportAll.setAttribute("aria-disabled", "false");
+  elements.exportAllXlsx.setAttribute("aria-disabled", "false");
 }
 
 async function loadRecords({ reset = true, focusFirst = true } = {}) {

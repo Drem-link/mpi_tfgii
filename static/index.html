@@ -23,9 +23,13 @@
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13V3m0 0L6.5 6.5M10 3l3.5 3.5M4 12.5v3A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>
             Загрузить шейп
           </button>
-          <a class="button button-primary disabled" id="export-all" href="#" aria-disabled="true">
+          <a class="button button-primary disabled" id="export-all" href="#" aria-disabled="true" title="Экспорт всего набора в DBF">
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m0 0 3.5-3.5M10 13l-3.5-3.5M4 14v2.5A.5.5 0 0 0 4.5 17h11a.5.5 0 0 0 .5-.5V14"/></svg>
-            Экспорт DBF
+            DBF
+          </a>
+          <a class="button button-primary disabled" id="export-all-xlsx" href="#" aria-disabled="true" title="Экспорт всего набора в Excel">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m0 0 3.5-3.5M10 13l-3.5-3.5M4 14v2.5A.5.5 0 0 0 4.5 17h11a.5.5 0 0 0 .5-.5V14"/></svg>
+            Excel
           </a>
           <input id="file-input" type="file" accept=".zip,application/zip" hidden>
         </div>
@@ -85,9 +89,13 @@
             </div>
             <div class="detail-summary" id="detail-summary"></div>
             <div class="detail-actions">
-              <a class="button button-primary button-wide" id="export-one" href="#" aria-disabled="true">
+              <a class="button button-primary button-wide" id="export-one" href="#" aria-disabled="true" title="Скачать запись в DBF">
                 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m0 0 3.5-3.5M10 13l-3.5-3.5M4 14v2.5A.5.5 0 0 0 4.5 17h11a.5.5 0 0 0 .5-.5V14"/></svg>
-                Скачать для импорта
+                DBF
+              </a>
+              <a class="button button-primary button-wide" id="export-one-xlsx" href="#" aria-disabled="true" title="Скачать запись в Excel">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m0 0 3.5-3.5M10 13l-3.5-3.5M4 14v2.5A.5.5 0 0 0 4.5 17h11a.5.5 0 0 0 .5-.5V14"/></svg>
+                Excel
               </a>
             </div>
             <div class="tabs" role="tablist" aria-label="Данные месторождения">
@@ -95,7 +103,7 @@
               <button class="tab" id="tab-source" type="button" role="tab" aria-selected="false">Поля шейпа <span id="source-field-count"></span></button>
             </div>
             <div class="field-list" id="field-list"></div>
-            <div class="detail-note"><span>i</span> Экспорт формируется в DBF, кодировка Windows-1251</div>
+            <div class="detail-note"><span>i</span> DBF — Windows-1251 · Excel — все исходные поля</div>
           </div>
         </aside>
       </main>

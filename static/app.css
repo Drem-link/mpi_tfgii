@@ -167,7 +167,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .detail-summary { min-height: 53px; padding: 0 17px 13px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; }
 .summary-chip { max-width: 100%; padding: 5px 9px; overflow: hidden; border: 1px solid #dce7d7; border-radius: 20px; background: #f1f6ee; color: #456b4c; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .summary-chip.muted { border-color: #e2e8e0; background: #f7f8f6; color: #718077; }
-.detail-actions { padding: 0 17px 14px; }
+.detail-actions { padding: 0 17px 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .tabs { min-height: 42px; padding: 0 14px; display: flex; gap: 18px; border-top: 1px solid #e6ebe4; border-bottom: 1px solid #e6ebe4; }
 .tab { position: relative; padding: 0 3px; border: 0; background: transparent; color: #758278; font-size: 11px; cursor: pointer; }
 .tab.active { color: #355d3d; }
