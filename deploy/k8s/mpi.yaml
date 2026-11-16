@@ -69,6 +69,8 @@ spec:
           env:
             - name: MPI_DATASET_PATH
               value: /var/lib/mpi/deposits.zip
+            - name: MPI_COOKIE_SECURE
+              value: "true"
           volumeMounts:
             - name: data
               mountPath: /var/lib/mpi

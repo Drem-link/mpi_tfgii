@@ -38,6 +38,20 @@ const elements = {
   exportAll: document.querySelector("#export-all"),
   exportAllXlsx: document.querySelector("#export-all-xlsx"),
   toast: document.querySelector("#toast"),
+  accountButton: document.querySelector("#account-button"),
+  accountOverlay: document.querySelector("#account-overlay"),
+  closeAccount: document.querySelector("#close-account"),
+  accountAnonymous: document.querySelector("#account-anonymous"),
+  accountProfile: document.querySelector("#account-profile"),
+  accountUsername: document.querySelector("#account-username"),
+  accountPassword: document.querySelector("#account-password"),
+  accountLogin: document.querySelector("#account-login"),
+  accountRegister: document.querySelector("#account-register"),
+  accountLogout: document.querySelector("#account-logout"),
+  accountUserName: document.querySelector("#account-user-name"),
+  accountError: document.querySelector("#account-error"),
+  accountDatasets: document.querySelector("#account-datasets"),
+  datasetSelect: document.querySelector("#dataset-select"),
   uploadOverlay: document.querySelector("#upload-overlay"),
   uploadButton: document.querySelector("#upload-button"),
   emptyUpload: document.querySelector("#empty-upload"),
@@ -50,6 +64,9 @@ const elements = {
 };
 
 const state = {
+  user: null,
+  datasets: [],
+  activeDatasetId: null,
   dataset: null,
   activeId: null,
   activeTab: "passport",
@@ -109,6 +126,12 @@ function showToast(message, isError = false) {
 }
 
 function openUpload() {
+  if (!state.user) {
+    elements.accountError.textContent = "Войдите или создайте аккаунт, чтобы загрузить личный шейп.";
+    elements.accountError.hidden = false;
+    elements.accountOverlay.hidden = false;
+    return;
+  }
   elements.uploadError.hidden = true;
   elements.uploadProgress.hidden = true;
   elements.uploadOverlay.hidden = false;
@@ -122,11 +145,24 @@ function closeUpload() {
 elements.uploadButton.addEventListener("click", openUpload);
 elements.emptyUpload.addEventListener("click", openUpload);
 elements.closeUpload.addEventListener("click", closeUpload);
+elements.accountButton.addEventListener("click", () => {
+  elements.accountError.hidden = true;
+  elements.accountOverlay.hidden = false;
+});
+elements.closeAccount.addEventListener("click", () => {
+  elements.accountOverlay.hidden = true;
+});
+elements.accountOverlay.addEventListener("click", (event) => {
+  if (event.target === elements.accountOverlay) elements.accountOverlay.hidden = true;
+});
 elements.uploadOverlay.addEventListener("click", (event) => {
   if (event.target === elements.uploadOverlay) closeUpload();
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !elements.uploadOverlay.hidden) closeUpload();
+  if (event.key === "Escape" && !elements.accountOverlay.hidden) {
+    elements.accountOverlay.hidden = true;
+  }
   if (event.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
     event.preventDefault();
     elements.search.focus();
@@ -264,6 +300,7 @@ async function loadMapOverview() {
     const payload = await request("/api/map");
     state.overviewLayer.clearLayers();
     state.overviewBounds = L.latLngBounds([]);
+    elements.mapCaption.textContent = "Обзор месторождений";
     for (const item of payload.items) {
       const position = [item.lat, item.lon];
       state.overviewBounds.extend(position);
@@ -283,6 +320,8 @@ async function loadMapOverview() {
     elements.mapEmpty.hidden = state.hasOverview;
     if (state.overviewBounds.isValid()) {
       map.fitBounds(state.overviewBounds.pad(0.06), { maxZoom: 5, animate: false });
+    } else {
+      map.setView([61, 93], 3, { animate: false });
     }
   } catch (error) {
     showToast(error.message, true);
@@ -362,7 +401,21 @@ function renderList() {
 
 function updateDataset(dataset) {
   state.dataset = dataset;
-  elements.datasetName.textContent = dataset.filename;
+  if (!dataset) {
+    elements.count.textContent = "—";
+    for (const link of [
+      elements.exportAll,
+      elements.exportAllXlsx,
+      elements.exportOne,
+      elements.exportOneXlsx,
+    ]) {
+      link.href = "#";
+      link.classList.add("disabled");
+      link.setAttribute("aria-disabled", "true");
+    }
+    return;
+  }
+  elements.datasetName.textContent = dataset.name || dataset.filename;
   elements.count.textContent = new Intl.NumberFormat("ru-RU").format(dataset.count);
   elements.exportAll.href = "/api/export/dbf";
   elements.exportAllXlsx.href = "/api/export/xlsx";
@@ -371,6 +424,179 @@ function updateDataset(dataset) {
   elements.exportAll.setAttribute("aria-disabled", "false");
   elements.exportAllXlsx.setAttribute("aria-disabled", "false");
 }
+
+function renderAccount() {
+  const signedIn = Boolean(state.user);
+  elements.accountAnonymous.hidden = signedIn;
+  elements.accountProfile.hidden = !signedIn;
+  elements.accountButton.textContent = signedIn ? state.user.username : "Кабинет";
+  if (signedIn) elements.accountUserName.textContent = state.user.username;
+  renderManagedDatasets();
+}
+
+function renderManagedDatasets() {
+  elements.accountDatasets.replaceChildren();
+  if (!state.user) return;
+  const personal = state.datasets.filter((dataset) => !dataset.shared);
+  if (!personal.length) {
+    const empty = document.createElement("div");
+    empty.className = "account-datasets-empty";
+    empty.textContent = "Личных наборов пока нет. Нажмите «Мой шейп», чтобы загрузить ZIP.";
+    elements.accountDatasets.append(empty);
+    return;
+  }
+  for (const dataset of personal) {
+    const item = document.createElement("article");
+    item.className = `account-dataset${dataset.id === state.activeDatasetId ? " active" : ""}`;
+    const select = document.createElement("button");
+    select.type = "button";
+    select.className = "account-dataset-select";
+    const title = document.createElement("strong");
+    title.textContent = dataset.name;
+    const count = document.createElement("span");
+    count.textContent = `${new Intl.NumberFormat("ru-RU").format(dataset.count)} записей`;
+    select.append(title, count);
+    select.addEventListener("click", () => activateDataset(dataset.id));
+
+    const controls = document.createElement("div");
+    controls.className = "account-dataset-controls";
+    const name = document.createElement("input");
+    name.className = "account-dataset-name";
+    name.type = "text";
+    name.maxLength = 80;
+    name.value = dataset.name;
+    name.setAttribute("aria-label", `Новое название набора ${dataset.name}`);
+    const rename = document.createElement("button");
+    rename.type = "button";
+    rename.className = "button";
+    rename.textContent = "Переименовать";
+    rename.addEventListener("click", async () => {
+      try {
+        await request(`/api/datasets/${encodeURIComponent(dataset.id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.value }),
+        });
+        await loadDatasets();
+        await loadRecords({ focusFirst: false });
+        showToast("Набор переименован.");
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "button delete-dataset";
+    remove.textContent = "Удалить";
+    remove.addEventListener("click", async () => {
+      if (!window.confirm(`Удалить набор «${dataset.name}»? Это действие нельзя отменить.`)) return;
+      try {
+        await request(`/api/datasets/${encodeURIComponent(dataset.id)}`, { method: "DELETE" });
+        await refreshDatasetView();
+        showToast("Набор удалён.");
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    });
+    controls.append(name, rename, remove);
+    item.append(select, controls);
+    elements.accountDatasets.append(item);
+  }
+}
+
+async function loadDatasets() {
+  const payload = await request("/api/datasets");
+  state.datasets = payload.items;
+  state.activeDatasetId = payload.active_id;
+  elements.datasetSelect.replaceChildren();
+  for (const dataset of state.datasets) {
+    const option = document.createElement("option");
+    option.value = dataset.id;
+    option.textContent = `${dataset.name} · ${new Intl.NumberFormat("ru-RU").format(dataset.count)}`;
+    elements.datasetSelect.append(option);
+  }
+  elements.datasetSelect.value = payload.active_id || "";
+  const hasChoices = state.datasets.length > 1;
+  elements.datasetSelect.hidden = !hasChoices;
+  elements.datasetName.hidden = hasChoices;
+  if (!hasChoices) {
+    elements.datasetName.textContent = state.datasets[0]?.name || "Данные не загружены";
+  }
+  renderAccount();
+  return payload;
+}
+
+async function refreshDatasetView() {
+  const payload = await loadDatasets();
+  state.query = "";
+  state.activeId = null;
+  elements.search.value = "";
+  state.selectedLayer.clearLayers();
+  if (payload.active_id) {
+    await loadMapOverview();
+    await loadRecords({ focusFirst: false });
+  } else {
+    state.hasOverview = false;
+    updateDataset(null);
+    renderList();
+    elements.detailsContent.hidden = true;
+    elements.detailsEmpty.hidden = false;
+    elements.mapEmpty.hidden = false;
+  }
+}
+
+async function activateDataset(datasetId) {
+  try {
+    await request(`/api/datasets/${encodeURIComponent(datasetId)}/select`, { method: "POST" });
+    await refreshDatasetView();
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+async function submitAccount(action) {
+  elements.accountError.hidden = true;
+  const username = elements.accountUsername.value.trim();
+  const password = elements.accountPassword.value;
+  try {
+    const payload = await request(`/api/auth/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    state.user = payload.user;
+    elements.accountPassword.value = "";
+    renderAccount();
+    await refreshDatasetView();
+    showToast(action === "register" ? "Аккаунт создан." : "Вы вошли в кабинет.");
+  } catch (error) {
+    elements.accountError.textContent = error.message;
+    elements.accountError.hidden = false;
+  }
+}
+
+elements.accountLogin.addEventListener("click", () => submitAccount("login"));
+elements.accountRegister.addEventListener("click", () => submitAccount("register"));
+for (const input of [elements.accountUsername, elements.accountPassword]) {
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") submitAccount("login");
+  });
+}
+elements.accountLogout.addEventListener("click", async () => {
+  try {
+    await request("/api/auth/logout", { method: "POST" });
+    state.user = null;
+    elements.accountPassword.value = "";
+    renderAccount();
+    await refreshDatasetView();
+    elements.accountOverlay.hidden = true;
+    showToast("Вы вышли из кабинета.");
+  } catch (error) {
+    elements.accountError.textContent = error.message;
+    elements.accountError.hidden = false;
+  }
+});
+elements.datasetSelect.addEventListener("change", () => activateDataset(elements.datasetSelect.value));
 
 async function loadRecords({ reset = true, focusFirst = true } = {}) {
   if (reset) {
@@ -443,7 +669,7 @@ elements.fileInput.addEventListener("change", async () => {
   try {
     const body = new FormData();
     body.append("file", file);
-    const payload = await request("/api/dataset", { method: "POST", body });
+    const payload = await request("/api/datasets", { method: "POST", body });
     updateDataset(payload.dataset);
     state.query = "";
     elements.search.value = "";
@@ -452,6 +678,7 @@ elements.fileInput.addEventListener("change", async () => {
     elements.sourceTab.classList.remove("active");
     elements.passportTab.setAttribute("aria-selected", "true");
     elements.sourceTab.setAttribute("aria-selected", "false");
+    await loadDatasets();
     await loadMapOverview();
     await loadRecords({ focusFirst: false });
     elements.uploadProgress.hidden = true;
@@ -472,15 +699,19 @@ elements.fileInput.addEventListener("change", async () => {
 
 async function initialize() {
   try {
-    const payload = await request("/api/status");
-    if (payload.loaded) {
-      updateDataset(payload.dataset);
+    const account = await request("/api/auth/me");
+    state.user = account.user;
+    renderAccount();
+    const payload = await loadDatasets();
+    if (payload.active_id) {
       await loadMapOverview();
       await loadRecords({ focusFirst: false });
-      if (payload.dataset.warnings.length) showToast(payload.dataset.warnings.join(" "));
+      if (state.dataset.warnings.length) showToast(state.dataset.warnings.join(" "));
     } else {
+      updateDataset(null);
       renderList();
-      openUpload();
+      if (state.user) openUpload();
+      else elements.accountOverlay.hidden = false;
     }
   } catch (error) {
     renderList();

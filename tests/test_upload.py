@@ -46,17 +46,23 @@ class UploadTests(unittest.TestCase):
                 "headers": [
                     (b"content-type", b"multipart/form-data; boundary=mpi-upload-test-boundary"),
                     (b"content-length", str(len(body)).encode()),
+                    (b"host", b"testserver"),
                 ],
                 "client": ("127.0.0.1", 12345),
                 "server": ("testserver", 80),
                 "root_path": "",
                 "app": main.app,
+                "session": {"user_id": "test-user"},
             },
             receive,
         )
 
         with tempfile.TemporaryDirectory() as directory:
-            with patch.object(main, "DATASET_PATH", Path(directory) / "deposits.zip"):
+            with (
+                patch.object(main, "USER_DATASETS_DIR", Path(directory) / "users"),
+                patch.object(main._store, "get_user", return_value={"id": "test-user", "username": "tester"}),
+                patch.object(main._store, "list_datasets", return_value=[]),
+            ):
                 with self.assertRaises(HTTPException) as error:
                     asyncio.run(main.upload_dataset(request))
 

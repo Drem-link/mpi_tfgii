@@ -102,8 +102,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .search input { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; color: var(--text); background: transparent; font-size: 12px; }
 .search input::placeholder { color: #87958a; }
 .search kbd { min-width: 19px; padding: 2px 4px; border: 1px solid #d9e1d8; border-radius: 4px; color: #748278; font: 10px var(--mono); text-align: center; }
-.dataset-line { min-height: 36px; padding: 0 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e8ede7; color: #76847a; font-size: 11px; }
+.dataset-line { min-height: 36px; padding: 0 12px 0 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e8ede7; color: #76847a; font-size: 11px; }
 .dataset-icon { color: #54815a; font-size: 14px; }
+#dataset-select { min-width: 0; flex: 1; padding: 4px 5px; border: 0; border-radius: 4px; background: transparent; color: #66776b; font-size: 11px; }
+#dataset-select:focus-visible { outline-offset: 0; }
 .record-list { min-height: 0; flex: 1; overflow: auto; padding: 5px 7px 9px; overscroll-behavior: contain; }
 .record-item { width: 100%; padding: 11px 9px 10px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--text); text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }
 .record-item:hover { background: #f5f8f3; }
@@ -204,6 +206,31 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .upload-error[hidden] { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.account-overlay { position: fixed; z-index: 1100; inset: 0; padding: 20px; display: grid; place-items: center; background: rgba(29, 42, 33, .45); backdrop-filter: blur(5px); }
+.account-overlay[hidden] { display: none; }
+.account-card { position: relative; width: min(520px, 100%); max-height: min(680px, 88vh); padding: 27px; overflow: auto; border: 1px solid #d5e0d3; border-radius: 12px; background: #ffffff; color: var(--text); box-shadow: 0 24px 80px rgba(24, 42, 27, .22); }
+.account-card h2 { margin: 0; font-size: 21px; letter-spacing: -.4px; }
+.account-description { margin: 10px 0 18px; color: #718077; font-size: 11px; line-height: 1.65; }
+.account-field { margin: 12px 0; display: flex; flex-direction: column; gap: 6px; color: #59695d; font-size: 11px; font-weight: 600; }
+.account-field input, .account-dataset-name { min-height: 37px; width: 100%; padding: 0 10px; border: 1px solid #d6dfd6; border-radius: 6px; background: #fafbf9; color: var(--text); font-size: 12px; }
+.account-actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.account-hint { margin: 13px 0 0; color: #7a887f; font-size: 10px; line-height: 1.6; }
+.account-error { margin: 14px 0 0; color: #a44731; font-size: 11px; line-height: 1.5; }
+.account-error[hidden] { display: none; }
+.account-user { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 0; border-bottom: 1px solid #e8ede7; color: #718077; font-size: 11px; }
+.account-user strong { color: #304337; }
+.account-profile > .account-description { margin-bottom: 12px; }
+.account-datasets { display: flex; flex-direction: column; gap: 9px; }
+.account-datasets-empty { padding: 16px 10px; border: 1px dashed #d4dfd2; border-radius: 7px; color: #7a887f; font-size: 11px; line-height: 1.5; text-align: center; }
+.account-dataset { padding: 11px; border: 1px solid #e0e7de; border-radius: 8px; background: #fbfcfa; }
+.account-dataset.active { border-color: #b7cfb6; background: #f3f8f1; }
+.account-dataset-select { width: 100%; padding: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; background: transparent; color: #304337; text-align: left; cursor: pointer; }
+.account-dataset-select strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.account-dataset-select span { flex: 0 0 auto; color: #77877b; font: 10px var(--mono); }
+.account-dataset-controls { margin-top: 9px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; }
+.account-dataset-controls .button { min-height: 32px; padding: 0 9px; font-size: 10px; }
+.account-dataset-name { min-width: 0; min-height: 32px; font-size: 11px; }
+
 @media (min-width: 1500px) {
   .workspace { grid-template-columns: minmax(260px, 320px) minmax(400px, 1fr) minmax(350px, 410px); gap: 14px; padding: 14px; }
 }
@@ -230,4 +257,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .topbar-right .button svg { display: none; }
   .brand strong { font-size: 17px; }
   .brand small { font-size: 8px; }
+  .account-card { padding: 23px 18px; }
+  .account-dataset-controls { grid-template-columns: minmax(0, 1fr) auto; }
+  .account-dataset-controls .delete-dataset { grid-column: 2; }
 }
