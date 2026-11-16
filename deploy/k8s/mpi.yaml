@@ -39,7 +39,7 @@ spec:
         fsGroup: 10001
       containers:
         - name: mpi
-          image: ghcr.io/drem-link/mpi_tfgii:latest
+          image: ghcr.io/drem-link/mpi-tfgii:latest
           imagePullPolicy: Always
           ports:
             - name: http

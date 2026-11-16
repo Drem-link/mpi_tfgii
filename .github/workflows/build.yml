@@ -42,7 +42,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/drem-link/mpi_tfgii
+          images: ghcr.io/drem-link/mpi-tfgii
           tags: |
             type=raw,value=latest
             type=sha,format=long,prefix=sha-

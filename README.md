@@ -29,7 +29,7 @@ HOST=0.0.0.0 .venv/bin/python -m app.main
 
 ## Развёртывание в Kubernetes
 
-GitHub Actions запускает тесты и публикует контейнер `ghcr.io/drem-link/mpi_tfgii`
+GitHub Actions запускает тесты и публикует контейнер `ghcr.io/drem-link/mpi-tfgii`
 с тегами `latest` и `sha-*` при push в `main`. PDF, локальное окружение и
 загруженный набор данных в репозиторий и контейнер не попадают.
 
