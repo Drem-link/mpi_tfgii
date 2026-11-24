@@ -33,9 +33,8 @@ const elements = {
   detailSummary: document.querySelector("#detail-summary"),
   fieldList: document.querySelector("#field-list"),
   sourceFieldCount: document.querySelector("#source-field-count"),
-  exportOne: document.querySelector("#export-one"),
+  exportOneWord: document.querySelector("#export-one-word"),
   exportOneXlsx: document.querySelector("#export-one-xlsx"),
-  exportAll: document.querySelector("#export-all"),
   exportAllXlsx: document.querySelector("#export-all-xlsx"),
   toast: document.querySelector("#toast"),
   accountButton: document.querySelector("#account-button"),
@@ -351,9 +350,11 @@ async function selectRecord(recordId, { focusMap = true } = {}) {
     elements.recordNumber.textContent = `№ ${String(record.id + 1).padStart(3, "0")}`;
     elements.detailName.textContent = record.name || "Без названия";
     elements.sourceFieldCount.textContent = Object.keys(record.attributes || {}).length;
-    elements.exportOne.href = `/api/export/dbf?record_id=${record.id}`;
+    elements.exportOneWord.href = `/api/export/word?record_id=${record.id}`;
+    elements.exportOneWord.classList.remove("disabled");
+    elements.exportOneWord.setAttribute("aria-disabled", "false");
     elements.exportOneXlsx.href = `/api/export/xlsx?record_id=${record.id}`;
-    elements.exportOne.setAttribute("aria-disabled", "false");
+    elements.exportOneXlsx.classList.remove("disabled");
     elements.exportOneXlsx.setAttribute("aria-disabled", "false");
     renderSummary(record);
     renderFields(record);
@@ -403,25 +404,21 @@ function updateDataset(dataset) {
   state.dataset = dataset;
   if (!dataset) {
     elements.count.textContent = "—";
-    for (const link of [
-      elements.exportAll,
-      elements.exportAllXlsx,
-      elements.exportOne,
-      elements.exportOneXlsx,
-    ]) {
-      link.href = "#";
-      link.classList.add("disabled");
-      link.setAttribute("aria-disabled", "true");
-    }
+    elements.exportOneWord.href = "#";
+    elements.exportOneWord.classList.add("disabled");
+    elements.exportOneWord.setAttribute("aria-disabled", "true");
+    elements.exportOneXlsx.href = "#";
+    elements.exportOneXlsx.classList.add("disabled");
+    elements.exportOneXlsx.setAttribute("aria-disabled", "true");
+    elements.exportAllXlsx.href = "#";
+    elements.exportAllXlsx.classList.add("disabled");
+    elements.exportAllXlsx.setAttribute("aria-disabled", "true");
     return;
   }
   elements.datasetName.textContent = dataset.name || dataset.filename;
   elements.count.textContent = new Intl.NumberFormat("ru-RU").format(dataset.count);
-  elements.exportAll.href = "/api/export/dbf";
   elements.exportAllXlsx.href = "/api/export/xlsx";
-  elements.exportAll.classList.remove("disabled");
   elements.exportAllXlsx.classList.remove("disabled");
-  elements.exportAll.setAttribute("aria-disabled", "false");
   elements.exportAllXlsx.setAttribute("aria-disabled", "false");
 }
 

@@ -16,10 +16,11 @@ from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import UploadFile as StarletteUploadFile
 from starlette.middleware.sessions import SessionMiddleware
 
-from app import dbfio, xlsxio
 from app.accounts import AccountStore
 from app.shapefile import MAX_ARCHIVE_BYTES, ShapefileDataset, load_shapefile_zip
 from app.textutil import fold
+from app.wordio import dumps as word_dumps
+from app.xlsxio import dumps as xlsx_dumps
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STATIC_DIR = PROJECT_ROOT / "static"
@@ -201,12 +202,6 @@ def _active_dataset_id(request: Request) -> str | None:
             return dataset_id
     _session(request)["active_dataset_id"] = "shared"
     return "shared" if _dataset is not None else None
-
-
-def _export_rows(records) -> bytes:
-    return dbfio.dumps(
-        [{field[0]: record.canonical.get(field[0]) for field in dbfio.FIELDS} for record in records]
-    )
 
 
 @app.get("/")
@@ -512,21 +507,16 @@ def occurrence(record_id: int, request: Request):
     return dataset.records[record_id].as_dict()
 
 
-@app.get("/api/export/dbf")
-def export_dbf(request: Request, record_id: int | None = None):
+@app.get("/api/export/word")
+def export_word(request: Request, record_id: int):
     dataset = _require_dataset(request)
-    if record_id is None:
-        records = dataset.records
-        filename = "occurrences.dbf"
-    else:
-        if record_id < 0 or record_id >= len(dataset.records):
-            raise HTTPException(404, "Месторождение не найдено.")
-        records = [dataset.records[record_id]]
-        filename = f"occurrence-{record_id + 1}.dbf"
+    if record_id < 0 or record_id >= len(dataset.records):
+        raise HTTPException(404, "Месторождение не найдено.")
+    record = dataset.records[record_id]
     return Response(
-        content=_export_rows(records),
-        media_type="application/x-dbase",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        content=word_dumps(record),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="deposit-{record_id + 1}.docx"'},
     )
 
 
@@ -535,14 +525,16 @@ def export_xlsx(request: Request, record_id: int | None = None):
     dataset = _require_dataset(request)
     if record_id is None:
         records = dataset.records
-        filename = "occurrences.xlsx"
+        filename = "deposits.xlsx"
+        card = False
     else:
         if record_id < 0 or record_id >= len(dataset.records):
             raise HTTPException(404, "Месторождение не найдено.")
         records = [dataset.records[record_id]]
-        filename = f"occurrence-{record_id + 1}.xlsx"
+        filename = f"deposit-{record_id + 1}.xlsx"
+        card = True
     return Response(
-        content=xlsxio.dumps(dataset.fields, (record.attributes for record in records)),
+        content=xlsx_dumps(records, card=card),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

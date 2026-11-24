@@ -118,18 +118,5 @@ class ShapefileTests(unittest.TestCase):
         self.assertAlmostEqual(dataset.records[0].center["lon"], 39.72, places=5)
         self.assertEqual(dataset.warnings, [])
 
-    def test_export_matches_legacy_dbf_fields(self):
-        dataset = load_shapefile_zip("mines.zip", dataset_zip())
-        payload = dbfio.dumps(
-            [{field[0]: dataset.records[0].canonical.get(field[0]) for field in dbfio.FIELDS}]
-        )
-
-        exported = dbfio.loads(payload)[0]
-        self.assertEqual(exported["NAME"], "Примерное месторождение")
-        self.assertEqual(exported["MINERAL"], "Железная руда")
-        self.assertAlmostEqual(exported["LAT"], 57.63)
-        self.assertAlmostEqual(exported["LON"], 39.72)
-
-
 if __name__ == "__main__":
     unittest.main()
